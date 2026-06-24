@@ -3,175 +3,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber Economy Mini App</title>
+    <title>Economy Premium App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --neon-purple: #a124db;
+            --neon-purple: #bd00ff;
             --neon-cyan: #00f3ff;
-            --glass-bg: rgba(20, 20, 28, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(24, 24, 35, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.07);
         }
-
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: radial-gradient(circle at top, #1a0b2e 0%, #0a0a0f 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: radial-gradient(circle at top, #140727 0%, #07070a 100%);
             color: #ffffff;
             margin: 0;
-            padding: 16px;
-            overflow-x: hidden;
+            padding: 16px 16px 80px 16px;
             min-height: 100vh;
+            box-sizing: border-box;
         }
-
-        /* Эффект Glassmorphism */
-        .glass-card {
+        .glass {
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
-            padding: 20px;
+            padding: 16px;
             margin-bottom: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
+        /* Вкладки */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .profile-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 12px;
-        }
+        /* Профиль */
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .user-title { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,243,255,0.4); font-weight: bold; font-size: 1.2rem;}
+        .balance { font-size: 1.4rem; font-weight: 800; color: #ffca28; }
 
-        .username {
-            font-size: 1.2rem;
-            font-weight: bold;
-            text-shadow: 0 0 8px var(--neon-cyan);
-            color: var(--neon-cyan);
-        }
+        /* Сетка Кейсов */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .card { text-align: center; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); }
+        .card.common { border-color: #8e8e93; }
+        .card.rare { border-color: #007aff; }
+        .card.epic { border-color: var(--neon-purple); }
+        .num { font-size: 1.5rem; font-weight: bold; margin-top: 5px; }
 
-        .balance-badge {
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: #ffca28;
-            text-shadow: 0 0 10px rgba(255, 202, 40, 0.5);
-        }
+        /* Кнопки */
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; color: #fff; font-size: 1rem; font-weight: bold; background: linear-gradient(135deg, var(--neon-purple), #6f0fd1); box-shadow: 0 0 15px rgba(189,0,255,0.4); margin-top: 10px; cursor: pointer;}
+        .btn:active { opacity: 0.8; }
 
-        .cases-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
+        /* Навигация (Нижний бар) */
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,10,15,0.85); backdrop-filter: blur(20px); border-top: 1px solid var(--glass-border); display: flex; justify-content: space-around; padding: 10px 0; }
+        .nav-item { color: #888; background: none; border: none; font-size: 0.9rem; cursor: pointer; display: flex; flex-direction: column; align-items: center;}
+        .nav-item.active { color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); }
 
-        .case-item {
-            text-align: center;
-            padding: 12px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
-            transition: transform 0.2s;
-        }
+        /* Лидерборд */
+        .leader-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-        .case-item:active {
-            transform: scale(0.95);
-        }
-
-        .case-item.common { border-color: #8e8e93; }
-        .case-item.rare { border-color: #007aff; box-shadow: 0 0 8px rgba(0,122,255,0.3); }
-        .case-item.epic { border-color: var(--neon-purple); box-shadow: 0 0 8px rgba(161,36,219,0.3); }
-
-        .case-count {
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin-top: 5px;
-        }
-
-        .btn-action {
-            width: 100%;
-            background: linear-gradient(135deg, var(--neon-purple) 0%, #6f0fd1 100%);
-            border: none;
-            outline: none;
-            color: white;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 0 15px var(--neon-purple);
-            transition: opacity 0.2s;
-        }
-
-        .btn-action:active {
-            opacity: 0.8;
-        }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; font-size: 1rem; margin-bottom: 10px;}
     </style>
 </head>
 <body>
 
-    <div class="glass-card">
-        <div class="profile-header">
-            <div id="username" class="username">Загрузка...</div>
-            <div id="balance" class="balance-badge">0 ⭐</div>
+    <div id="main" class="tab-content active">
+        <div class="glass">
+            <div class="header">
+                <div id="username" class="user-title">Загрузка...</div>
+                <div id="balance" class="balance">0 ⭐</div>
+            </div>
         </div>
-        <p style="color: #aaa; font-size: 0.9rem;">Твой инвентарь кейсов:</p>
 
-        <div class="cases-grid">
-            <div class="case-item common">
-                <div style="color: #aaa;">Обычный</div>
-                <div id="count-common" class="case-count">0</div>
+        <div class="glass">
+            <h3>🧰 Твои кейсы</h3>
+            <div class="grid">
+                <div class="card common"><div>Обычный</div><div id="c-common" class="num">0</div><button onclick="openCase('common')" style="margin-top:5px; font-size:0.8rem;">Открыть</button></div>
+                <div class="card rare"><div>Редкий</div><div id="c-rare" class="num">0</div><button onclick="openCase('rare')" style="margin-top:5px; font-size:0.8rem;">Открыть</button></div>
+                <div class="card epic"><div>Эпик</div><div id="c-epic" class="num">0</div><button onclick="openCase('epic')" style="margin-top:5px; font-size:0.8rem;">Открыть</button></div>
             </div>
-            <div class="case-item rare">
-                <div style="color: #007aff;">Редкий</div>
-                <div id="count-rare" class="case-count">0</div>
-            </div>
-            <div class="case-item epic">
-                <div style="color: var(--neon-purple);">Эпик</div>
-                <div id="count-epic" class="case-count">0</div>
-            </div>
+        </div>
+
+        <div class="glass">
+            <h3>🎁 Бонусы</h3>
+            <button class="btn" onclick="claimBonus()">Получить ежедневный бонус</button>
         </div>
     </div>
 
-    <div style="padding: 0 4px;">
-        <button class="btn-action" onclick="openCaseSimulation()">Испытать удачу (Кейсы)</button>
+    <div id="leaderboard" class="tab-content">
+        <div class="glass">
+            <h3>🏆 Топ игроков сезона</h3>
+            <div id="leaderboard-list">Загрузка...</div>
+        </div>
+    </div>
+
+    <div id="promos" class="tab-content">
+        <div class="glass">
+            <h3>🎟 Активация промокода</h3>
+            <input type="text" id="promo-input" placeholder="Введите код">
+            <button class="btn" onclick="activatePromo()">Активировать</button>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('main', this)">🏠 Главная</button>
+        <button class="nav-item" onclick="switchTab('leaderboard', this)">🏆 Топ</button>
+        <button class="nav-item" onclick="switchTab('promos', this)">🎟 Промо</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
-        tg.expand(); // Разворачиваем на весь экран
+        tg.expand();
 
-        // URL твоего запущенного FastAPI сервера (на хостинге или ngrok для тестов)
-        const API_URL = "https://ТВОЙ_IP_ИЛИ_NGROK_ССЫЛКА.ngrok-free.app";
+        // Поменяй на адрес своего сервера или ngrok на время тестов
+        const API_URL = "https://ТВОЙ_АДРЕС_СЕРВЕРА.ru";
 
-        async function loadProfile() {
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            el.classList.add('active');
+
+            if(tabId === 'leaderboard') loadLeaderboard();
+        }
+
+        async function request(endpoint, body = {}) {
+            body.initData = tg.initData;
             try {
-                const response = await fetch(`${API_URL}/api/profile`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ initData: tg.initData })
+                const res = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
                 });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById("username").innerText = `@${data.username}`;
-                    document.getElementById("balance").innerText = `${data.balance} ⭐`;
-                    document.getElementById("count-common").innerText = data.inventory.common;
-                    document.getElementById("count-rare").innerText = data.inventory.rare;
-                    document.getElementById("count-epic").innerText = data.inventory.epic;
-                } else {
-                    document.getElementById("username").innerText = "Ошибка авторизации";
-                }
-            } catch (err) {
-                document.getElementById("username").innerText = "Сервер бэка недоступен";
+                return await res.json();
+            } catch (e) {
+                tg.showAlert("Ошибка соединения с бэкендом.");
+                return null;
             }
         }
 
-        function openCaseSimulation() {
-            tg.showAlert("Анимация открытия кейса скоро будет готова!");
+        async function loadProfile() {
+            const data = await request('/api/get_profile');
+            if(data) {
+                document.getElementById('username').innerText = `@${data.username}`;
+                document.getElementById('balance').innerText = `${data.balance} ⭐`;
+                document.getElementById('c-common').innerText = data.cases.common;
+                document.getElementById('c-rare').innerText = data.cases.rare;
+                document.getElementById('c-epic').innerText = data.cases.epic;
+            }
         }
 
-        // Загружаем профиль сразу при старте страницы
+        async function claimBonus() {
+            const data = await request('/api/claim_bonus');
+            if(data) {
+                if(data.success) {
+                    tg.showAlert(`✅ Вы получили бонус: +${data.amount} ⭐`);
+                    loadProfile();
+                } else if(data.error === 'sub_required') {
+                    tg.showConfirm(`❌ Вы не подписаны на канал ${CHANNEL_USERNAME}. Перейти к подписке?`, (ok) => {
+                        if(ok) tg.openTelegramLink(`https://t.me/giftez_base`);
+                    });
+                } else if(data.error === 'cooldown') {
+                    tg.showAlert(`⏳ Кулдаун! Следующий бонус доступен через: ${data.time}`);
+                }
+            }
+        }
+
+        async function openCase(type) {
+            const data = await request('/api/open_case', {case_type: type});
+            if(data) {
+                if(data.success) {
+                    tg.showAlert(`🎉 Кейс открыт! Ваша награда: +${data.reward} ⭐`);
+                    loadProfile();
+                } else {
+                    tg.showAlert("❌ У вас нет кейсов этого типа!");
+                }
+            }
+        }
+
+        async function activatePromo() {
+            const code = document.getElementById('promo-input').value;
+            if(!code) return;
+            const data = await request('/api/activate_promo', {code: code});
+            if(data) {
+                tg.showAlert(data.success ? data.msg : `❌ Ошибка: ${data.error}`);
+                if(data.success) {
+                    document.getElementById('promo-input').value = '';
+                    loadProfile();
+                }
+            }
+        }
+
+        async function loadLeaderboard() {
+            const data = await request('/api/get_leaderboard');
+            if(data) {
+                const container = document.getElementById('leaderboard-list');
+                container.innerHTML = '';
+                data.forEach((user, index) => {
+                    container.innerHTML += `
+                        <div class="leader-row">
+                            <span>${index + 1}. @${user.username}</span>
+                            <span style="color:var(--neon-cyan)">${user.opened_cases} кейсов</span>
+                        </div>`;
+                });
+            }
+        }
+
         loadProfile();
     </script>
 </body>
