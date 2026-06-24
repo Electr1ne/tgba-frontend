@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Economy Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --neon-purple: #a124db;
+            --neon-cyan: #00f3ff;
+            --glass-bg: rgba(20, 20, 28, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: radial-gradient(circle at top, #1a0b2e 0%, #0a0a0f 100%);
+            color: #ffffff;
+            margin: 0;
+            padding: 16px;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Эффект Glassmorphism */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+        }
+
+        .username {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 0 0 8px var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .balance-badge {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ffca28;
+            text-shadow: 0 0 10px rgba(255, 202, 40, 0.5);
+        }
+
+        .cases-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .case-item {
+            text-align: center;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            transition: transform 0.2s;
+        }
+
+        .case-item:active {
+            transform: scale(0.95);
+        }
+
+        .case-item.common { border-color: #8e8e93; }
+        .case-item.rare { border-color: #007aff; box-shadow: 0 0 8px rgba(0,122,255,0.3); }
+        .case-item.epic { border-color: var(--neon-purple); box-shadow: 0 0 8px rgba(161,36,219,0.3); }
+
+        .case-count {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .btn-action {
+            width: 100%;
+            background: linear-gradient(135deg, var(--neon-purple) 0%, #6f0fd1 100%);
+            border: none;
+            outline: none;
+            color: white;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--neon-purple);
+            transition: opacity 0.2s;
+        }
+
+        .btn-action:active {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-card">
+        <div class="profile-header">
+            <div id="username" class="username">Загрузка...</div>
+            <div id="balance" class="balance-badge">0 ⭐</div>
+        </div>
+        <p style="color: #aaa; font-size: 0.9rem;">Твой инвентарь кейсов:</p>
+
+        <div class="cases-grid">
+            <div class="case-item common">
+                <div style="color: #aaa;">Обычный</div>
+                <div id="count-common" class="case-count">0</div>
+            </div>
+            <div class="case-item rare">
+                <div style="color: #007aff;">Редкий</div>
+                <div id="count-rare" class="case-count">0</div>
+            </div>
+            <div class="case-item epic">
+                <div style="color: var(--neon-purple);">Эпик</div>
+                <div id="count-epic" class="case-count">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="padding: 0 4px;">
+        <button class="btn-action" onclick="openCaseSimulation()">Испытать удачу (Кейсы)</button>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // Разворачиваем на весь экран
+
+        // URL твоего запущенного FastAPI сервера (на хостинге или ngrok для тестов)
+        const API_URL = "https://ТВОЙ_IP_ИЛИ_NGROK_ССЫЛКА.ngrok-free.app";
+
+        async function loadProfile() {
+            try {
+                const response = await fetch(`${API_URL}/api/profile`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ initData: tg.initData })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById("username").innerText = `@${data.username}`;
+                    document.getElementById("balance").innerText = `${data.balance} ⭐`;
+                    document.getElementById("count-common").innerText = data.inventory.common;
+                    document.getElementById("count-rare").innerText = data.inventory.rare;
+                    document.getElementById("count-epic").innerText = data.inventory.epic;
+                } else {
+                    document.getElementById("username").innerText = "Ошибка авторизации";
+                }
+            } catch (err) {
+                document.getElementById("username").innerText = "Сервер бэка недоступен";
+            }
+        }
+
+        function openCaseSimulation() {
+            tg.showAlert("Анимация открытия кейса скоро будет готова!");
+        }
+
+        // Загружаем профиль сразу при старте страницы
+        loadProfile();
+    </script>
+</body>
+</html>
